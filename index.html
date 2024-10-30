@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Max Profit Tree Structure</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center align items */
+        }
+        .result {
+            font-family: monospace;
+            white-space: pre;
+            margin-top: 20px;
+            text-align: center; /* Center text */
+        }
+        table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 100%; /* Full width */
+            max-width: 600px; /* Max width for table */
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center; /* Center align table content */
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Max Profit Problem</h1>
+
+    <form id="profitForm" onsubmit="calculate(); return false">
+        <label for="timeUnits">Enter Time Units: </label>
+        <input type="number" id="timeUnits" name="timeUnits" min="1" required>
+        <button type="submit">Calculate</button>
+    </form>
+
+    <div class="result" id="result"></div>
+
+    <table id="resultTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>Configuration</th>
+                <th>Profit</th>
+            </tr>
+        </thead>
+        <tbody id="resultBody"></tbody>
+    </table>
+
+    <script>
+        const properties = {
+            'T': { build_time: 5, profit_per_time: 1500 },  // Theatre
+            'P': { build_time: 4, profit_per_time: 1000 },  // Pub
+            'C': { build_time: 10, profit_per_time: 3000 }  // Commercial Park
+        };
+
+        let formattedNodes = [];
+
+        function calculate() {
+            const timeUnits = parseInt(document.getElementById('timeUnits').value);
+            formattedNodes = []; // Reset formatted nodes
+            const tree = buildTree(timeUnits, { T: 0, P: 0, C: 0 }, 0);
+            sortNodes(); // Sort nodes in descending order
+        }
+
+        function buildTree(remainingTime, counts, totalProfit) {
+            if (remainingTime <= 0) {
+                return { counts, remainingTime, totalProfit, children: [] };
+            }
+
+            for (const [type, { build_time, profit_per_time }] of Object.entries(properties)) {
+                if (remainingTime >= build_time) {
+                    const newCounts = { ...counts, [type]: counts[type] + 1 };
+                    const newProfit = totalProfit + profit_per_time * (remainingTime - build_time);
+                    const childNode = buildTree(remainingTime - build_time, newCounts, newProfit);
+                    if (!isNodeInArray(childNode)) {
+                        formattedNodes.push([`T${newCounts.T} P${newCounts.P} C${newCounts.C}`, newProfit]); // Store formatted node
+                    }
+                }
+            }
+            return formattedNodes.length ? formattedNodes : { counts, remainingTime, totalProfit, children: [] };
+        }
+
+        function isNodeInArray(node) {
+            return formattedNodes.some(existingNode => 
+                existingNode[0] === node[0] && existingNode[1] === node[1]
+            );
+        }
+
+        function sortNodes() {
+            formattedNodes.sort((a, b) => b[1] - a[1]); // Sort by profit
+
+            let maxProfitAttainable = formattedNodes[0][1];
+            let solutionArray = formattedNodes.filter(node => node[1] === maxProfitAttainable);
+            
+            displayResults(maxProfitAttainable, solutionArray);
+        }
+
+        function displayResults(maxProfit, solutions) {
+            document.getElementById('result').textContent = `Maximum Profit: ${maxProfit}`;
+            const resultTable = document.getElementById('resultTable');
+            const resultBody = document.getElementById('resultBody');
+            resultBody.innerHTML = ''; // Clear previous results
+
+            solutions.forEach(([config, profit]) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${config}</td><td>${profit}</td>`;
+                resultBody.appendChild(row);
+            });
+
+            resultTable.style.display = 'table'; // Show the table
+        }
+    </script>
+
+</body>
+</html>
